@@ -4285,3 +4285,56 @@ def gaussian_nll_loss(
         return paddle.sum(loss, name=name)
     elif reduction == 'none':
         return loss
+
+
+def lp_loss(input, label, p = 2, reduction='mean', name=None):
+       
+    r"""
+    Computes the Lp Loss of Tensor ``input`` and ``label`` as follows.
+
+    If `reduction` set to ``'none'``, the loss is:
+
+    .. math::
+        Out = {\Vert input - label \Vert}_p
+
+    If `reduction` set to ``'mean'``, the loss is:
+
+    .. math::
+        Out = MEAN({\Vert input - label \Vert}_p)
+
+    If `reduction` set to ``'sum'``, the loss is:
+
+    .. math::
+        Out = SUM({\Vert input - label \Vert}_p)
+
+
+    Parameters:
+        input (Tensor): The input tensor. The shapes is [N, `*`], where N is batch size and `*` means any number of additional dimensions. It's data type should be float32, float64, int32, int64.
+        label (Tensor): label. The shapes is [N, `*`], same shape as ``input`` . It's data type should be float32, float64, int32, int64.
+        reduction (str, optional): Indicate the reduction to apply to the loss,
+            the candidates are ``'none'`` | ``'mean'`` | ``'sum'``.
+            If `reduction` is ``'none'``, the unreduced loss is returned;
+            If `reduction` is ``'mean'``, the reduced mean loss is returned.
+            If `reduction` is ``'sum'``, the reduced sum loss is returned.
+            Default is ``'mean'``.
+        name (str, optional): Name for the operation (optional, default is None). For more information, please refer to :ref:`api_guide_Name`.
+
+    Returns:
+        Tensor, the Lp Loss of Tensor ``input`` and ``label``.
+        If `reduction` is ``'none'``, the shape of output loss is :math:`[N, *]`, the same as ``input`` .
+        If `reduction` is ``'mean'`` or ``'sum'``, the shape of output loss is [].
+    """
+    asert p > 0
+    
+    num_examples = input.shape[0]
+
+    diff = paddle.linalg.norm(paddle.reshape(input,[num_examples,-1]) - paddle.reshape(label, [num_examples,-1]), p, axis=-1, name = name)
+
+    if reduction == 'sum':
+        unreduced = diff
+        return paddle.sum(unreduced, name=name)
+    elif reduction == 'mean':
+        unreduced = diff
+        return paddle.mean(unreduced, name=name)
+    else:
+        return diff
